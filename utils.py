@@ -30,42 +30,41 @@ import matplotlib.pyplot as plt
 
 def calculate_3_phase_power(voltage, current, power_factor=0.95):
     """Returns electrical power (W) given voltage (V) and
-    current (I) using the standard 3-phase power equation.
-    Unless specified, power_factor is assumed to be 0.95.
+    current (A) using the standard 3-phase power equation.
+    Unless specified, 'power_factor' is assumed to be 0.95.
     """
 
-    return voltage*current*np.sqrt(3)*power_factor
+    return voltage * current * np.sqrt(3) * power_factor
 
 
 def estimate_motor_FLA(capacity, voltage, units='kW', efficiency=0.95,
                        three_phase=True):
-    """Returns an estimate of full-load-amps for an electric
+    """Returns an estimate of full-load amps for an electric
     motor of given capacity (kW), voltage (V).  In reality,
     FLA is dependent on motor size, design and condition so
-    only use this estimate if you do not have a manufacturer's
-    estimate.
+    only use this estimate if you do not have a better one.
     """
 
     if units.lower() == 'kw':
         capacity_kw = capacity
     elif units.lower() == 'hp':
-        capacity_kw = capacity*0.7457
+        capacity_kw = capacity * 0.7457
     elif units.lower() == 'mw':
-        capacity_kw = capacity*1e3
+        capacity_kw = capacity * 1e3
     elif units.lower() == 'w':
-        capacity_kw = capacity*1e-3
+        capacity_kw = capacity * 1e-3
     else:
         raise ValueError("Motor capacity units not valid.")
 
     # Adjustment factor, calibrated to produce 72 A for a
     # 4160 V, 600 hp  motor
     #adj = 1.1
-    adj = 1.052  # Using this for current project
+    adj = 1.052  # Used this on previous project
 
     if three_phase is True:
-        return capacity_kw*1000/(voltage*np.sqrt(3))/efficiency*adj
+        return capacity_kw * 1000 / (voltage * np.sqrt(3)) / efficiency * adj
     else:
-        return capacity_kw*1000/voltage/efficiency*adj
+        return capacity_kw * 1000 / voltage / efficiency * adj
 
 
 def load_process_data(filename, path=None, sheet_name=0, header=0,
@@ -188,7 +187,7 @@ def convert_to_numeric(data, show=True):
     missing or not numeric (see Pandas.to_numeric for
     details).
 
-    If show is True, gives a summary of the number of
+    If 'show' is True, gives a summary of the number of
     NaN values and counts of the non-numeric data found.
     """
 
@@ -227,7 +226,7 @@ def calculate_running_status(data, min_value=None, min_prop=0.1,
     is a series of motor amp readings, it will return a series
     of boolean values (True/False).  The threshold used to
     determine running / not-running status is determined by the
-    min_prop or min_value parameters (see below).
+    'min_prop' or 'min_value' (see below).
 
     Args:
         data (pd.Series or pd.DataFrame): Data inputs
@@ -256,13 +255,14 @@ def calculate_running_status(data, min_value=None, min_prop=0.1,
 
 def drop_values_when_not_running(data, running_status,
                                  rename_map=None):
-    """Replaces all values in data where running_status is False
-    with np.nan values.  This is useful when you have multiple
-    time-series in a dataframe and want to calculate things like
-    average amps when running.  This only works when the column
-    names in running_status match those in data.  If they are
-    different then use rename_map to indicate the columns in
-    data to which each column in running_status should be applied.
+    """Replaces all values in data where 'running_status' is 
+    False with np.nan values.  This is useful when you have 
+    multiple time-series in a dataframe and want to calculate 
+    things like average amps when running.  This only works 
+    when the column names in running_status match those in 
+    the data.  If they are different then use rename_map to 
+    indicate the columns in the data to which each column in
+    'running_status' should be applied.
 
     Example use:
     >>> data = pd.DataFrame({
@@ -463,4 +463,3 @@ def filename_from_string(value, sub=r'\/*&+', repl='-',
         value = value.lower()
 
     return value.strip('-_')
-
