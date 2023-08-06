@@ -20,6 +20,8 @@ Contents:
 """
 
 import os
+import unicodedata
+import re
 import numpy as np
 import pandas as pd
 
@@ -412,25 +414,53 @@ def plot_daily_loads(load_data, dates, title, filename=None, ylabel='KVA',
     plt.show()
 
 
-def filename_from_string(s, allow_chars=('-', '.', '_')):
-    """Returns a safe filename from string s by removing
-    non-alphanumeric characters and replacing spaces with
-    hyphens.
+def filename_from_string(value, sub=r'\/*&+', repl='-', 
+                         lowercase=False, allow_unicode=False):
+    """Returns a string based on 'value' that can be used as a valid 
+    filename, excluding file extension. This is achieved as follows:
+
+      1. All characters are converted to ASCII equivalents 
+         (unless 'allow_unicode' is True).
+      2. Any instances of the characters specified in 'sub' are 
+         replaced with underscores.
+      3. Any remaining characters that are not alphanumeric or 
+         underscore are removed.
+      4. Any white-space is replaced with the string 'repl' 
+         ('-' by default).
+      5. (optional) Converts all characters to lowercase if
+         'lower' is True.
+      6. Any leading or trailing whitespace, dashes, or 
+         underscores are removed.
+
+    Note:
+     - 'value' should not include a file extension, since all 
+       instances of '.' will be replaced. 
 
     Example:
-    >>> label = 'PUMP #1 MOTOR LOAD'  # Contains invalid char
-    >>> filename = f'{label}-plot.pdf'
-    >>> utils.filename_from_string(filename)
-    'PUMP-1-MOTOR-LOAD-plot.pdf'
+    >>> label = '355-FE/DE-109 GEBLÄSE_#1 FLOW-RATE  (m^3/hr)'
+    >>> filename = f'{filename_from_string(label)}-plot.pdf'
+    >>> print(filename)
+    '355-FE_DE-109-GEBLASE_1-FLOW-RATE-m3_hr-plot.pdf'
+
+    The code is based on the slugify function and discussions at the
+    following links:
+     - https://github.com/django/django/blob/master/django/utils/text.py
+     - https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename
     """
 
-    safe_chars = []
-    for x in s.strip():
-        if x == ' ':
-            safe_chars.append('-')
-        elif x.isalnum():
-            safe_chars.append(x)
-        elif x in allow_chars:
-            safe_chars.append(x)
+    value = str(value)
 
-    return "".join(safe_chars)
+    if allow_unicode:
+        value = unicodedata.normalize('NFKC', value)
+    else:
+        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+    if sub:
+        value = re.sub(r'[_' + sub + r']+', '_', value)
+    value = re.sub(r'[^-\w\s]', '', value)
+    value = re.sub(r'[-\s]+', repl, value)
+
+    if lowercase:
+        value = value.lower()
+
+    return value.strip('-_')
+
